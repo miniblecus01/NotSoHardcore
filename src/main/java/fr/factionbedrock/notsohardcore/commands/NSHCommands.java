@@ -1,3 +1,4 @@
+
 package fr.factionbedrock.notsohardcore.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -27,97 +28,137 @@ public final class NSHCommands
 {
     private NSHCommands() {}
 
-    public static void register() {CommandRegistrationCallback.EVENT.register(NSHCommands::registerImpl);}
+    public static void register() {
+        CommandRegistrationCallback.EVENT.register(NSHCommands::registerImpl);
+    }
 
-    private static void registerImpl(CommandDispatcher<CommandSourceStack> dispatcher, net.minecraft.core.HolderLookup.Provider registryAccess, Commands.CommandSelection env) {
+    private static void registerImpl(
+            CommandDispatcher<CommandSourceStack> dispatcher,
+            net.minecraft.core.HolderLookup.Provider registryAccess,
+            Commands.CommandSelection env) {
+
         dispatcher.register(
-                literal("nsh").requires(src -> src.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                        .then(literal("useRealtime")
-                                .then(argument("value", BoolArgumentType.bool())
-                                        .executes(ctx -> {
-                                            boolean value = BoolArgumentType.getBool(ctx, "value");
-                                            NSHConfigSaver.updateUseRealtimeRegain(value);
-                                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
-                                            ctx.getSource().sendSuccess(() -> Component.literal("useRealtimeRegain = " + value), true);
-                                            return 1;
-                                        })
-                                )
-                        )
-                        .then(literal("creativeResetsLifeCount")
-                                .then(argument("value", BoolArgumentType.bool())
-                                        .executes(ctx -> {
-                                            boolean value = BoolArgumentType.getBool(ctx, "value");
-                                            NSHConfigSaver.updateCreativeResetsLifeCount(value);
-                                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
-                                            ctx.getSource().sendSuccess(() -> Component.literal("creativeResetsLifeCount = " + value), true);
-                                            return 1;
-                                        })
-                                )
-                        )
-                        .then(literal("alwaysRenderHardcoreHearts")
-                                .then(argument("value", BoolArgumentType.bool())
-                                        .executes(ctx -> {
-                                            boolean value = BoolArgumentType.getBool(ctx, "value");
-                                            NSHConfigSaver.updateAlwaysRenderHardcoreHearts(value);
-                                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
-                                            ctx.getSource().sendSuccess(() -> Component.literal("alwaysRenderHardcoreHearts = " + value), true);
-                                            return 1;
-                                        })
-                                )
-                        )
-                        .then(literal("maxLives")
-                                .then(argument("value", IntegerArgumentType.integer(1, 1000))
-                                        .executes(ctx -> {
-                                            int value = IntegerArgumentType.getInteger(ctx, "value");
-                                            NSHConfigSaver.updateMaxLives(value);
-                                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
-                                            clampAllPlayersLives(ctx.getSource(), value);
-                                            ctx.getSource().sendSuccess(() -> Component.literal("maxLives = " + value), true);
-                                            return 1;
-                                        })
-                                )
-                        )
-                        .then(literal("cooldown")
-                                .then(cooldownArgument("ticks", 1))
-                                .then(cooldownArgument("seconds", 20))
-                                .then(cooldownArgument("minutes", 1200))
-                                .then(cooldownArgument("hours", 72000))
-                                .then(cooldownArgument("days", 1728000))
-                        )
-                        .then(literal("show").executes(ctx -> {
-                            ctx.getSource().sendSuccess(() -> Component.literal("maxLives = " + LoadedConfig.Server.MAX_LIVES), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal("useRealtimeRegain = " + LoadedConfig.Server.USE_REALTIME_REGAIN), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal("timeToRegainLife = " + LoadedConfig.Server.TIME_TO_REGAIN_LIFE + " ticks = " + NSHHelper.getTimeStringFromTicks(LoadedConfig.Server.TIME_TO_REGAIN_LIFE)), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal("creativeResetsLifeCount = " + LoadedConfig.Server.CREATIVE_RESETS_LIFE_COUNT), false);
-                            ctx.getSource().sendSuccess(() -> Component.literal("alwaysRenderHardcoreHearts = " + LoadedConfig.Server.ALWAYS_RENDER_HARDCORE_HEARTS), false);
+            literal("nsh").requires(src -> src.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(literal("useRealtime")
+                    .then(argument("value", BoolArgumentType.bool())
+                        .executes(ctx -> {
+                            boolean value = BoolArgumentType.getBool(ctx, "value");
+                            NSHConfigSaver.updateUseRealtimeRegain(value);
+                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
+                            ctx.getSource().sendSuccess(() -> Component.literal("useRealtimeRegain = " + value), true);
                             return 1;
-                        }))
-                        .then(literal("respawn")
-                            .then(argument("player", EntityArgument.player())
-                                .executes(context ->
-                                {
-                                    ServerPlayer target = EntityArgument.getPlayer(context, "player");
-                                    if (target.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) {throw new SimpleCommandExceptionType(Component.translatable("commands."+ NotSoHardcore.MOD_ID+".respawn.already_alive")).create();}
-                                    NSHHelper.forceRespawnPlayer(target);
-                                    return 1;
-                                })
-                            )
-                        )
+                        })
+                    )
+                )
+                .then(literal("creativeResetsLifeCount")
+                    .then(argument("value", BoolArgumentType.bool())
+                        .executes(ctx -> {
+                            boolean value = BoolArgumentType.getBool(ctx, "value");
+                            NSHConfigSaver.updateCreativeResetsLifeCount(value);
+                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
+                            ctx.getSource().sendSuccess(() -> Component.literal("creativeResetsLifeCount = " + value), true);
+                            return 1;
+                        })
+                    )
+                )
+                .then(literal("alwaysRenderHardcoreHearts")
+                    .then(argument("value", BoolArgumentType.bool())
+                        .executes(ctx -> {
+                            boolean value = BoolArgumentType.getBool(ctx, "value");
+                            NSHConfigSaver.updateAlwaysRenderHardcoreHearts(value);
+                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
+                            ctx.getSource().sendSuccess(() -> Component.literal("alwaysRenderHardcoreHearts = " + value), true);
+                            return 1;
+                        })
+                    )
+                )
+                .then(literal("maxLives")
+                    .then(argument("value", IntegerArgumentType.integer(1, 1000))
+                        .executes(ctx -> {
+                            int value = IntegerArgumentType.getInteger(ctx, "value");
+                            NSHConfigSaver.updateMaxLives(value);
+                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
+                            clampAllPlayersLives(ctx.getSource(), value);
+                            ctx.getSource().sendSuccess(() -> Component.literal("maxLives = " + value), true);
+                            return 1;
+                        })
+                    )
+                )
+                .then(literal("cooldown")
+                    .then(cooldownArgument("ticks", 1))
+                    .then(cooldownArgument("seconds", 20))
+                    .then(cooldownArgument("minutes", 1200))
+                    .then(cooldownArgument("hours", 72000))
+                    .then(cooldownArgument("days", 1728000))
+                )
+                .then(literal("show").executes(ctx -> {
+                    ctx.getSource().sendSuccess(() -> Component.literal("maxLives = " + LoadedConfig.Server.MAX_LIVES), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("useRealtimeRegain = " + LoadedConfig.Server.USE_REALTIME_REGAIN), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("timeToRegainLife = " + LoadedConfig.Server.TIME_TO_REGAIN_LIFE + " ticks = " + NSHHelper.getTimeStringFromTicks(LoadedConfig.Server.TIME_TO_REGAIN_LIFE)), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("creativeResetsLifeCount = " + LoadedConfig.Server.CREATIVE_RESETS_LIFE_COUNT), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("alwaysRenderHardcoreHearts = " + LoadedConfig.Server.ALWAYS_RENDER_HARDCORE_HEARTS), false);
+                    return 1;
+                }))
+                .then(literal("respawn")
+                    .then(argument("player", EntityArgument.player())
+                        .executes(ctx -> {
+                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                            if (target.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) {
+                                throw new SimpleCommandExceptionType(Component.translatable("commands." + NotSoHardcore.MOD_ID + ".respawn.already_alive")).create();
+                            }
+                            NSHHelper.forceRespawnPlayer(target);
+                            return 1;
+                        })
+                    )
+                )
+        );
+
+        // Nuevo comando: /darvidas jugador cantidad
+        dispatcher.register(
+            literal("darvidas")
+                .requires(src -> src.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(argument("player", EntityArgument.player())
+                    .then(argument("cantidad", IntegerArgumentType.integer(1, 1000))
+                        .executes(ctx -> {
+                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                            int cantidad = IntegerArgumentType.getInteger(ctx, "cantidad");
+
+                            int actuales = target.getEntityData().get(NSHTrackedData.LIVES);
+                            int maximas = LoadedConfig.Server.MAX_LIVES;
+                            int nuevas = Math.min(maximas, Math.max(0, actuales) + cantidad);
+
+                            target.getEntityData().set(NSHTrackedData.LIVES, nuevas);
+
+                            if (target.gameMode.getGameModeForPlayer() == GameType.SPECTATOR && nuevas > 0) {
+                                NSHHelper.respawnPlayer(target);
+                            }
+
+                            int entregadas = nuevas - actuales;
+
+                            ctx.getSource().sendSuccess(
+                                () -> Component.literal("Has dado " + entregadas + " vidas a " + target.getName().getString() + ". Total: " + nuevas + "/" + maximas),
+                                true
+                            );
+
+                            return 1;
+                        })
+                    )
+                )
         );
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> cooldownArgument(String timeUnit, int multiplierToTick)
     {
         return literal(timeUnit)
-                .then(argument("value", IntegerArgumentType.integer(1))
-                        .executes(ctx -> {
-                            int value = IntegerArgumentType.getInteger(ctx, "value");
-                            NSHConfigSaver.updateTimeToRegainLife(value * multiplierToTick);
-                            NSHNetworking.sendS2CSync(ctx.getSource().getServer());
-                            ctx.getSource().sendSuccess(() -> Component.literal("timeToRegainLife = " + value + " " + timeUnit +" = " + NSHHelper.getTimeStringFromTicks((long) value * multiplierToTick)), true);
-                            return 1;
-                        })
-                );
+            .then(argument("value", IntegerArgumentType.integer(1))
+                .executes(ctx -> {
+                    int value = IntegerArgumentType.getInteger(ctx, "value");
+                    NSHConfigSaver.updateTimeToRegainLife(value * multiplierToTick);
+                    NSHNetworking.sendS2CSync(ctx.getSource().getServer());
+                    ctx.getSource().sendSuccess(() -> Component.literal("timeToRegainLife = " + value + " " + timeUnit + " = " + NSHHelper.getTimeStringFromTicks((long) value * multiplierToTick)), true);
+                    return 1;
+                })
+            );
     }
 
     private static void clampAllPlayersLives(CommandSourceStack src, int maxLives)
@@ -126,7 +167,9 @@ public final class NSHCommands
         for (ServerPlayer player : src.getServer().getPlayerList().getPlayers())
         {
             int lives = player.getEntityData().get(NSHTrackedData.LIVES);
-            if (lives > maxLives) {player.getEntityData().set(NSHTrackedData.LIVES, maxLives);}
+            if (lives > maxLives) {
+                player.getEntityData().set(NSHTrackedData.LIVES, maxLives);
+            }
         }
     }
 }
